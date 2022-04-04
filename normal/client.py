@@ -1,61 +1,33 @@
-import socket
-import signal, sys
-import hmac, hashlib, uuid, secrets
+import socket, ssl
 
+HOST, PORT = '127.0.0.1', 443
 
-def signal_handler(key, frame):
-	print("\n\n[!] Exiting...\n")
-	sys.exit(1)
+def send_message(conn):
+    user = input("\n Enter your username: ")
+    password = input("\n Enter your password: ")
+    message = input("\n Enter the message you want to send: ")
 
-signal = signal.signal(signal.SIGINT, signal_handler)
+    total_message = user + ":" + password + ":" + message
+    conn.send(total_message.encode())
+    print(conn.recv().decode())
 
-def generate_and_send_key(client):
-	key = secrets.token_urlsafe(16)
-	client.send(str.encode(key))
-	return str.encode(key)
+def main():
 
-def calculate_hmac(message, key, alg_cript):
-	if alg_cript == "1":
-		return hmac.new(key, str.encode(message), hashlib.sha256).hexdigest()
-	elif alg_cript == "2":
-		return hmac.new(key, str.encode(message), hashlib.sha512).hexdigest()
-	elif alg_cript == "3":
-		return hmac.new(key, str.encode(message), hashlib.sha3_256).hexdigest()
-	elif alg_cript == "4":
-		return hmac.new(key, str.encode(message), hashlib.sha3_512).hexdigest()
-	else:
-		print("Invalid algorithm")
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+    context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+    context.check_hostname = False
+    context.verify_mode=ssl.CERT_NONE
 
-def send_message(client, key):
-	while True:
-		alg_cript = input("\nEnter algorithm to use (1: SHA-256 - 2: SHA-512 - 3: SHA3-256 - 4: SHA3-512): ")
-		from_account = input("\nEnter your account number: ")
-		to_account = input("\nEnter the account number you want to transfer to: ")
-		amount = input("\nEnter the amount you want to transfer: ")
-		message = from_account + ":" + to_account + ":" + amount + ":" + uuid.uuid4().hex
-		mac = calculate_hmac(message, key, alg_cript)
-		message+= ":" + mac + ":" + alg_cript
+    #context.options |= ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1 
+    context.set_ciphers('AES256+SHA384')
+    conn = context.wrap_socket(sock, server_hostname=HOST)
 
-		client.send(str.encode(message))
-		response = client.recv(2048)
-		response_dec=str(response.decode()).split(": ")[1]
-		id_transfer=str(response_dec).split("-")[0]
-		mac_transfer=str(response_dec).split("-")[1].strip()
-		if(hmac.compare_digest(mac_transfer, hmac.new(key, str.encode(id_transfer), hashlib.sha256).hexdigest())):
-			print("\n[+] Integrity verify")
-		else:
-			print("\n[!] Integrity fail")
-		return response.decode()
+    try:
+        conn.connect((HOST, PORT))
+        send_message(conn)
+    finally:
+        conn.close()
 
-if __name__=='__main__':
-
-	client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	client.connect(('127.0.0.1', 1233))
-	connection_status = client.recv(1024)
-	print(connection_status.decode())
-	
-	key = generate_and_send_key(client)
-	message_response = send_message(client, key)
-	print(message_response)
-	client.close()
+if __name__ == '__main__':
+    main()

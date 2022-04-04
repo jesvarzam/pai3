@@ -1,4 +1,0 @@
-Valid messages: 0
-Invalid messages: 0
-Total messages: 0
-KPI: 0
