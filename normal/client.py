@@ -6,10 +6,12 @@ def send_message(conn):
 	
     user = input("\nEnter your username: ")
     password = input("\nEnter your password: ")
-    message = input("\nEnter the message you want to send: ")
+    login = user + ":" + password
+    conn.send(login.encode())
+    print(conn.recv(1024).decode())
 
-    total_message = user + ":" + password + ":" + message
-    conn.send(total_message.encode())
+    message = input("\nEnter the message you want to send: ")
+    conn.send(message.encode())
     print(conn.recv(1024).decode())
 
 def main():

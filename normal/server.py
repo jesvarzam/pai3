@@ -4,6 +4,9 @@ from _thread import *
 CERT_PATH = os.path.dirname(os.path.abspath(__file__)) + "/../utils/mycert.pem"
 
 def recv_message(conn):
+    login = conn.recv(1024)
+    conn.send(b'\n[+] Login successful!')
+
     message = conn.recv(1024)
     print('\n[*] Message received: ' + message.decode())
     conn.send(b'\n[+] Message received!')
