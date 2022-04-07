@@ -13,9 +13,11 @@ def stress():
     context.set_ciphers('AES256+SHA384')
     conn = context.wrap_socket(sock, server_hostname=HOST)
     conn.connect((HOST, PORT))
-    sleep(60)
+    while True:
+        sleep(1)
 
 if __name__ == '__main__':
     for i in range(300):
+        sleep(0.1)
         t = Thread(target=stress)
         t.start()
