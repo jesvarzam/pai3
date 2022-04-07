@@ -4,7 +4,10 @@ from _thread import *
 from threading import Thread
 from time import sleep
 
+connections=0
 HOST, PORT = '127.0.0.1', 443
+n_con = input("Insert the number of simultaneous connections to create: ")
+
 def stress():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
@@ -17,7 +20,12 @@ def stress():
         sleep(1)
 
 if __name__ == '__main__':
-    for i in range(300):
-        sleep(0.1)
-        t = Thread(target=stress)
-        t.start()
+    try:
+        for i in range(int(n_con)):
+            sleep(0.1)
+            t = Thread(target=stress)
+            t.start()
+            connections+=1
+            print("[+] Number of simultaneous connections: " + str(connections))
+    except:
+        print("Insert a valid number")
